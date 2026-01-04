@@ -1,0 +1,1145 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nova - Busca Inteligente</title>
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Google+Sans:wght@400;500;700&family=Roboto:wght@400;500&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Round" rel="stylesheet">
+    <style>
+        :root {
+            --md-primary: #a8c7fa;
+            --md-on-primary: #062e6f;
+            --md-primary-container: #2d4a7c;
+            --md-on-primary-container: #d3e3fd;
+            --md-secondary: #bec6dc;
+            --md-secondary-container: #3b4858;
+            --md-surface: #1f1f1f;
+            --md-surface-variant: #2d2d2d;
+            --md-surface-container: #28292a;
+            --md-surface-container-high: #333438;
+            --md-on-surface: #e8e8e8;
+            --md-on-surface-variant: #c4c6cf;
+            --md-outline: #8e9099;
+            --md-outline-variant: #44474e;
+        }
+        * {
+            font-family: 'Google Sans', 'Roboto', sans-serif;
+        }
+        body {
+            background: linear-gradient(180deg, #0f0f12 0%, #121215 100%);
+            min-height: 100vh;
+            color: var(--md-on-surface);
+        }
+        .search-container {
+            background: var(--md-surface-container);
+            border: 1px solid var(--md-outline-variant);
+            border-radius: 28px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .search-container:focus-within {
+            box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+            background: var(--md-surface-container-high);
+            border-color: var(--md-outline);
+        }
+        .search-input {
+            background: transparent;
+            outline: none;
+            font-size: 16px;
+            color: var(--md-on-surface);
+        }
+        .search-input::placeholder {
+            color: var(--md-on-surface-variant);
+        }
+        .chip {
+            background: var(--md-surface-container);
+            border: 1px solid var(--md-outline-variant);
+            border-radius: 8px;
+            padding: 8px 16px;
+            font-size: 14px;
+            color: var(--md-on-surface-variant);
+            transition: all 0.2s ease;
+            cursor: pointer;
+        }
+        .chip:hover {
+            background: var(--md-secondary-container);
+            border-color: transparent;
+        }
+        .chip.active {
+            background: var(--md-secondary-container);
+            border-color: transparent;
+            color: var(--md-on-surface);
+        }
+        .fab {
+            background: var(--md-surface-container-high);
+            color: var(--md-on-surface);
+            border: 1px solid var(--md-outline-variant);
+            border-radius: 16px;
+            padding: 12px 24px;
+            font-size: 14px;
+            font-weight: 500;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            cursor: pointer;
+        }
+        .fab:hover {
+            background: var(--md-secondary-container);
+            border-color: transparent;
+            transform: translateY(-1px);
+        }
+        
+        /* Botão Estou com Sorte - animação suave */
+        #luckyBtn {
+            position: relative;
+            overflow: hidden;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+        }
+        #luckyBtn .btn-text {
+            display: inline-block;
+            white-space: nowrap;
+            transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), 
+                        opacity 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        
+        .icon-btn {
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background 0.2s ease;
+            color: var(--md-on-surface-variant);
+            cursor: pointer;
+            border: none;
+            background: transparent;
+        }
+        .icon-btn:hover {
+            background: var(--md-surface-variant);
+        }
+        .suggestion-card {
+            background: var(--md-surface-container);
+            border: 1px solid var(--md-outline-variant);
+            border-radius: 16px;
+            padding: 16px;
+            transition: all 0.2s ease;
+            cursor: pointer;
+        }
+        .suggestion-card:hover {
+            background: var(--md-secondary-container);
+            border-color: transparent;
+            transform: translateY(-2px);
+        }
+
+        .avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: var(--md-primary-container);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--md-on-primary-container);
+            cursor: pointer;
+        }
+        .trending-badge {
+            background: linear-gradient(135deg, #EA4335 0%, #FBBC05 100%);
+            color: white;
+            padding: 4px 12px;
+            border-radius: 100px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+
+        /* Botão Modo IA - Estilo Google */
+        .btn-ai {
+            position: relative;
+            background: var(--md-surface-container-high);
+            border: none;
+            border-radius: 100px;
+            color: var(--md-on-surface);
+            padding: 0 16px 0 12px;
+            height: 44px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            cursor: pointer;
+            overflow: hidden;
+            font-size: 14px;
+            font-weight: 500;
+        }
+        .btn-ai::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            border-radius: inherit;
+            background: rgba(255,255,255,0.08);
+            border: 1px solid rgba(255,255,255,0.2);
+            opacity: 0.4;
+            transition: opacity 0.3s;
+        }
+        .btn-ai:hover::before {
+            opacity: 0;
+        }
+        .ai-gradient-blur,
+        .ai-gradient-main {
+            position: absolute;
+            inset: 0;
+            border-radius: inherit;
+            overflow: hidden;
+            pointer-events: none;
+        }
+        .ai-gradient-blur {
+            opacity: 0.35;
+            filter: blur(3px);
+        }
+        .ai-gradient-inner {
+            position: absolute;
+            height: 200%;
+            top: -50%;
+            left: 0;
+            right: 0;
+            background: conic-gradient(
+                from 180deg,
+                transparent 0deg,
+                #34a853 43deg,
+                #ffd314 65deg,
+                #ff4641 105deg,
+                #3186ff 144deg,
+                #3186ff 180deg,
+                transparent 324deg
+            );
+            transform: scale(2, 1) rotate(180deg);
+            opacity: 0;
+            transition: opacity 0.4s linear;
+        }
+        .btn-ai:hover .ai-gradient-inner {
+            opacity: 1;
+            animation: rotateGradient 2s linear infinite;
+        }
+        @keyframes rotateGradient {
+            from { transform: scale(2, 1) rotate(0deg); }
+            to { transform: scale(2, 1) rotate(360deg); }
+        }
+        .ai-bg {
+            position: absolute;
+            inset: 2px;
+            border-radius: inherit;
+            background: var(--md-surface-container-high);
+            transition: filter 0.5s ease;
+        }
+        .btn-ai:hover .ai-bg {
+            filter: blur(3px);
+        }
+        .ai-content {
+            position: relative;
+            z-index: 1;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .ai-content svg {
+            width: 20px;
+            height: 20px;
+            fill: currentColor;
+        }
+
+        /* Upload Popup */
+        .upload-popup {
+            position: absolute;
+            top: 60px;
+            right: 0;
+            background: var(--md-surface-container-high);
+            border: 1px solid var(--md-outline-variant);
+            border-radius: 16px;
+            padding: 8px 0;
+            min-width: 240px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+            opacity: 0;
+            visibility: hidden;
+            transform: translateY(-10px) scale(0.95);
+            transition: all 0.2s ease;
+            z-index: 1000;
+        }
+        .upload-popup.active {
+            opacity: 1;
+            visibility: visible;
+            transform: translateY(0) scale(1);
+        }
+        .upload-item {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            padding: 14px 20px;
+            cursor: pointer;
+            transition: background 0.2s;
+            border: none;
+            background: none;
+            width: 100%;
+            text-align: left;
+            color: var(--md-on-surface);
+            font-size: 14px;
+            font-family: inherit;
+        }
+        .upload-item:hover {
+            background: var(--md-secondary-container);
+        }
+        .upload-item .material-icons-round {
+            font-size: 22px;
+            color: var(--md-on-surface-variant);
+        }
+
+        /* Quick Link Cards */
+        .quick-link-card {
+            background: var(--md-surface-container);
+            border: 1px solid var(--md-outline-variant);
+            border-radius: 16px;
+            padding: 20px;
+            text-align: center;
+            transition: all 0.2s ease;
+            cursor: pointer;
+            text-decoration: none;
+        }
+        .quick-link-card:hover {
+            background: var(--md-secondary-container);
+            border-color: transparent;
+            transform: translateY(-2px);
+        }
+
+        /* Seleção de texto Material You */
+        ::selection {
+            background: transparent;
+            color: inherit;
+        }
+        ::-moz-selection {
+            background: transparent;
+            color: inherit;
+        }
+
+        /* Seleção customizada com bordas arredondadas */
+        .custom-selection {
+            position: fixed;
+            background: rgba(168, 199, 250, 0.35);
+            border-radius: 6px;
+            pointer-events: none;
+            z-index: 9998;
+        }
+
+        /* Logo Animation - Material 3 Expressive */
+        .logo-animated {
+            display: inline-block;
+            cursor: default;
+        }
+        .logo-letter {
+            display: inline-block;
+            animation: logoExpressiveFloat 3s cubic-bezier(0.34, 1.56, 0.64, 1) infinite;
+            transform-origin: center bottom;
+            transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+        .logo-letter:nth-child(1) { animation-delay: 0s; }
+        .logo-letter:nth-child(2) { animation-delay: 0.12s; }
+        .logo-letter:nth-child(3) { animation-delay: 0.24s; }
+        .logo-letter:nth-child(4) { animation-delay: 0.36s; }
+        
+        /* Spring physics float animation */
+        @keyframes logoExpressiveFloat {
+            0%, 100% { 
+                transform: translateY(0) scale(1) rotate(0deg); 
+            }
+            15% { 
+                transform: translateY(-12px) scale(1.05) rotate(-2deg); 
+            }
+            30% { 
+                transform: translateY(-8px) scale(1.02) rotate(1deg); 
+            }
+            45% { 
+                transform: translateY(-14px) scale(1.06) rotate(-1deg); 
+            }
+            60% { 
+                transform: translateY(-6px) scale(1.01) rotate(0.5deg); 
+            }
+            75% { 
+                transform: translateY(-10px) scale(1.03) rotate(-0.5deg); 
+            }
+        }
+        
+        /* Hover - spring bounce effect */
+        .logo-animated:hover .logo-letter {
+            animation: logoSpringBounce 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+        }
+        .logo-animated:hover .logo-letter:nth-child(1) { animation-delay: 0s; }
+        .logo-animated:hover .logo-letter:nth-child(2) { animation-delay: 0.05s; }
+        .logo-animated:hover .logo-letter:nth-child(3) { animation-delay: 0.1s; }
+        .logo-animated:hover .logo-letter:nth-child(4) { animation-delay: 0.15s; }
+        
+        @keyframes logoSpringBounce {
+            0% { transform: translateY(0) scale(1); }
+            20% { transform: translateY(-25px) scale(1.15); }
+            40% { transform: translateY(8px) scale(0.95); }
+            60% { transform: translateY(-10px) scale(1.08); }
+            80% { transform: translateY(4px) scale(0.98); }
+            100% { transform: translateY(0) scale(1); }
+        }
+        
+        /* Individual letter color glow on hover */
+        .logo-letter:nth-child(1):hover { text-shadow: 0 0 30px rgba(66, 133, 244, 0.8); }
+        .logo-letter:nth-child(2):hover { text-shadow: 0 0 30px rgba(234, 67, 53, 0.8); }
+        .logo-letter:nth-child(3):hover { text-shadow: 0 0 30px rgba(251, 188, 5, 0.8); }
+        .logo-letter:nth-child(4):hover { text-shadow: 0 0 30px rgba(52, 168, 83, 0.8); }
+
+        /* Search Suggestions */
+        .suggestions-container {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            background: var(--md-surface-container-high);
+            border: 1px solid var(--md-outline-variant);
+            border-top: none;
+            border-radius: 0 0 28px 28px;
+            overflow: hidden;
+            z-index: 1000;
+            display: none;
+            padding-bottom: 8px;
+        }
+        .suggestions-container.active {
+            display: block;
+        }
+        .search-container:has(+ .suggestions-container.active),
+        .search-container.suggestions-open {
+            border-radius: 28px 28px 0 0;
+            border-bottom: none;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+        }
+        .suggestion-item {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            padding: 10px 20px;
+            cursor: pointer;
+            color: var(--md-on-surface);
+            font-size: 16px;
+            transition: background 0.15s;
+        }
+        .suggestion-item:hover,
+        .suggestion-item.selected {
+            background: var(--md-surface-variant);
+        }
+        .suggestion-item .material-icons-round {
+            color: var(--md-on-surface-variant);
+            font-size: 20px;
+        }
+        .suggestion-icon {
+            width: 28px;
+            height: 28px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            background: var(--md-surface-container-high);
+            overflow: hidden;
+        }
+        .suggestion-icon img {
+            width: 20px;
+            height: 20px;
+            object-fit: contain;
+        }
+        .suggestion-match {
+            color: var(--md-on-surface);
+        }
+        .suggestion-complete {
+            color: var(--md-on-surface-variant);
+        }
+
+        /* Menu de Seleção de Texto */
+        .selection-menu {
+            position: fixed;
+            background: rgba(40, 41, 42, 0.95);
+            backdrop-filter: blur(10px);
+            border: 1px solid var(--md-outline-variant);
+            border-radius: 12px;
+            padding: 6px;
+            display: flex;
+            gap: 4px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+            z-index: 9999;
+            opacity: 0;
+            visibility: hidden;
+            transform: translateY(8px);
+            transition: all 0.2s ease;
+        }
+        .selection-menu.active {
+            opacity: 1;
+            visibility: visible;
+            transform: translateY(0);
+        }
+        .selection-menu button {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 40px;
+            height: 40px;
+            border: none;
+            background: transparent;
+            border-radius: 10px;
+            cursor: pointer;
+            color: var(--md-on-surface);
+            transition: background 0.2s;
+        }
+        .selection-menu button:hover {
+            background: var(--md-secondary-container);
+        }
+        .selection-menu button .material-icons-round {
+            font-size: 20px;
+        }
+        .quick-link-icon {
+            width: 48px;
+            height: 48px;
+            margin: 0 auto 12px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+    </style>
+</head>
+<body class="p-4 md:p-8">
+    <!-- Header -->
+    <header class="flex items-center justify-between mb-8">
+        <div class="flex items-center gap-2">
+            <span class="text-2xl font-bold" style="color: var(--md-primary);">Nova</span>
+            <span class="text-xs px-2 py-1 rounded-full" style="background: var(--md-primary-container); color: var(--md-on-primary-container);">Beta</span>
+        </div>
+        <div class="flex items-center gap-2">
+            <a href="https://mail.google.com" target="_blank" class="text-sm px-3 py-2 rounded-full hover:bg-[var(--md-surface-variant)] transition" style="color: var(--md-on-surface-variant);">Gmail</a>
+            <a href="https://images.google.com" target="_blank" class="text-sm px-3 py-2 rounded-full hover:bg-[var(--md-surface-variant)] transition" style="color: var(--md-on-surface-variant);">Imagens</a>
+            <button class="avatar" style="background: #4CAF50; color: white; font-weight: 600; font-size: 16px;">
+                J
+            </button>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="max-w-3xl mx-auto">
+        <!-- Logo -->
+        <div class="text-center mb-8 mt-8">
+            <h1 class="text-6xl md:text-7xl font-bold mb-2 logo-animated">
+                <span class="logo-letter" style="color: #4285F4;">N</span><span class="logo-letter" style="color: #EA4335;">o</span><span class="logo-letter" style="color: #FBBC05;">v</span><span class="logo-letter" style="color: #34A853;">a</span>
+            </h1>
+            <p class="text-sm" style="color: var(--md-on-surface-variant);">Busca inteligente na web</p>
+        </div>
+
+        <!-- Search Bar -->
+        <div class="relative">
+            <div class="search-container flex items-center px-6 py-4 mb-6">
+                <span class="material-icons-round mr-4" style="color: var(--md-on-surface-variant);">search</span>
+                <input 
+                    type="text" 
+                    id="searchInput"
+                    class="search-input flex-1" 
+                    placeholder="Pesquisar no Nova ou digitar URL"
+                    autocomplete="off"
+                >
+                <button class="icon-btn" id="voiceBtn" style="margin: -8px;" title="Pesquisa por voz">
+                    <span class="material-icons-round" style="color: var(--md-primary);">mic</span>
+                </button>
+                <button class="icon-btn" id="uploadBtn" style="margin: -8px -12px -8px 0;" title="Fazer upload">
+                    <span class="material-icons-round" style="color: var(--md-primary);">add</span>
+                </button>
+            </div>
+
+            <!-- Search Suggestions -->
+            <div class="suggestions-container" id="suggestionsContainer"></div>
+
+            <!-- Upload Popup -->
+            <div class="upload-popup" id="uploadPopup">
+                <button class="upload-item" id="uploadImageBtn">
+                    <span class="material-icons-round">image</span>
+                    <span>Fazer upload da imagem</span>
+                </button>
+                <button class="upload-item" id="uploadFileBtn">
+                    <span class="material-icons-round">attach_file</span>
+                    <span>Fazer upload do arquivo</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- Search Buttons -->
+        <div class="flex flex-wrap justify-center gap-3 mb-8">
+            <button class="fab" id="searchBtn">
+                Pesquisa Nova
+            </button>
+            <button class="fab" id="luckyBtn" style="min-width: 180px;">
+                <span class="btn-text">Estou com sorte</span>
+            </button>
+            <button class="btn-ai" id="aiModeBtn">
+                <div class="ai-gradient-blur">
+                    <div class="ai-gradient-inner"></div>
+                </div>
+                <div class="ai-gradient-main">
+                    <div class="ai-gradient-inner"></div>
+                </div>
+                <div class="ai-bg"></div>
+                <div class="ai-content">
+                    <svg viewBox="0 0 24 24">
+                        <path d="M17.5 12c0-3.04 2.46-5.5 5.5-5.5-3.04 0-5.5-2.46-5.5-5.5 0 3.04-2.46 5.5-5.5 5.5 3.04 0 5.5 2.46 5.5 5.5z"/>
+                        <path d="M15.65 11.58c.18-.5.27-1.03.31-1.58h-2c-.1 1.03-.51 1.93-1.27 2.69-.88.87-1.94 1.31-3.19 1.31C7.03 14 5 12.07 5 9.5 5 7.03 6.93 5 9.5 5c.46 0 .89.08 1.3.2l1.56-1.56C11.5 3.22 10.55 3 9.5 3 5.85 3 3 5.85 3 9.5S5.85 16 9.5 16c.56 0 2.26-.06 3.8-1.3l6.3 6.3 1.4-1.4-6.3-6.3c.4-.5.72-1.08.95-1.72z"/>
+                    </svg>
+                    <span>Modo IA</span>
+                </div>
+            </button>
+        </div>
+
+        <!-- Filter Chips -->
+        <div class="flex flex-wrap justify-center gap-2 mb-8">
+            <button class="chip active">
+                <span class="flex items-center gap-2">
+                    <span class="material-icons-round text-base">language</span>
+                    Todos
+                </span>
+            </button>
+            <button class="chip">
+                <span class="flex items-center gap-2">
+                    <span class="material-icons-round text-base">image</span>
+                    Imagens
+                </span>
+            </button>
+            <button class="chip">
+                <span class="flex items-center gap-2">
+                    <span class="material-icons-round text-base">play_circle</span>
+                    Vídeos
+                </span>
+            </button>
+            <button class="chip">
+                <span class="flex items-center gap-2">
+                    <span class="material-icons-round text-base">article</span>
+                    Notícias
+                </span>
+            </button>
+            <button class="chip">
+                <span class="flex items-center gap-2">
+                    <span class="material-icons-round text-base">map</span>
+                    Mapas
+                </span>
+            </button>
+        </div>
+
+        <!-- Trending Searches -->
+        <div class="mb-8">
+            <div class="flex items-center gap-2 mb-4">
+                <span class="material-icons-round" style="color: var(--md-primary);">trending_up</span>
+                <h2 class="font-medium" style="color: var(--md-on-surface);">Em alta</h2>
+                <span class="trending-badge">Novo</span>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-3" id="trendingGrid">
+                <!-- Trending items will be inserted here -->
+            </div>
+        </div>
+
+        <!-- Quick Links -->
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mt-8">
+            <a href="https://translate.google.com" target="_blank" class="quick-link-card">
+                <div class="quick-link-icon" style="background: rgba(52, 168, 83, 0.2);">
+                    <span class="material-icons-round" style="color: #34A853;">translate</span>
+                </div>
+                <span class="text-sm" style="color: var(--md-on-surface);">Tradutor</span>
+            </a>
+            <a href="https://www.google.com/search?q=clima" target="_blank" class="quick-link-card">
+                <div class="quick-link-icon" style="background: rgba(251, 140, 0, 0.2);">
+                    <span class="material-icons-round" style="color: #FB8C00;">wb_sunny</span>
+                </div>
+                <span class="text-sm" style="color: var(--md-on-surface);">Clima</span>
+            </a>
+            <a href="https://mail.google.com" target="_blank" class="quick-link-card">
+                <div class="quick-link-icon" style="background: rgba(66, 133, 244, 0.2);">
+                    <span class="material-icons-round" style="color: #4285F4;">mail</span>
+                </div>
+                <span class="text-sm" style="color: var(--md-on-surface);">Gmail</span>
+            </a>
+            <a href="https://youtube.com" target="_blank" class="quick-link-card">
+                <div class="quick-link-icon" style="background: rgba(234, 67, 53, 0.2);">
+                    <span class="material-icons-round" style="color: #EA4335;">play_circle</span>
+                </div>
+                <span class="text-sm" style="color: var(--md-on-surface);">YouTube</span>
+            </a>
+        </div>
+    </main>
+
+    <!-- Hidden file inputs -->
+    <input type="file" id="imageInput" accept="image/*" hidden>
+    <input type="file" id="fileInput" accept="application/pdf" hidden>
+
+    <!-- Menu de Seleção de Texto -->
+    <div class="selection-menu" id="selectionMenu">
+        <button id="copyBtn" title="Copiar">
+            <span class="material-icons-round">content_copy</span>
+        </button>
+        <button id="searchSelBtn" title="Pesquisar">
+            <span class="material-icons-round">search</span>
+        </button>
+        <button id="aiSelBtn" title="Modo IA">
+            <span class="material-icons-round">auto_awesome</span>
+        </button>
+    </div>
+
+    <script>
+        // Elements
+        const searchInput = document.getElementById('searchInput');
+        const searchBtn = document.getElementById('searchBtn');
+        const luckyBtn = document.getElementById('luckyBtn');
+        const luckyText = luckyBtn.querySelector('.btn-text');
+        const aiModeBtn = document.getElementById('aiModeBtn');
+        const uploadBtn = document.getElementById('uploadBtn');
+        const uploadPopup = document.getElementById('uploadPopup');
+        const uploadImageBtn = document.getElementById('uploadImageBtn');
+        const uploadFileBtn = document.getElementById('uploadFileBtn');
+        const imageInput = document.getElementById('imageInput');
+        const fileInput = document.getElementById('fileInput');
+
+        // Lucky messages
+        const luckyMessages = [
+            "Estou com sorte",
+            "Vou explorar",
+            "Estou curioso",
+            "Quero descobrir",
+            "Surpreenda-me"
+        ];
+        let currentMsgIndex = 0;
+
+        // Trending searches data
+        const trendingSearches = [
+            { icon: 'sports_soccer', text: 'Copa do Mundo 2024', trend: '+50K' },
+            { icon: 'movie', text: 'Novos filmes Netflix', trend: '+32K' },
+            { icon: 'devices', text: 'iPhone 16 preço', trend: '+28K' },
+            { icon: 'music_note', text: 'Shows Brasil 2024', trend: '+21K' },
+            { icon: 'auto_awesome', text: 'Inteligência Artificial', trend: '+18K' },
+            { icon: 'flight', text: 'Passagens aéreas baratas', trend: '+15K' }
+        ];
+
+        // Initialize trending searches
+        function initTrending() {
+            const grid = document.getElementById('trendingGrid');
+            grid.innerHTML = trendingSearches.map((item) => `
+                <div class="suggestion-card flex items-center gap-4" onclick="searchFor('${item.text}')">
+                    <div class="w-10 h-10 rounded-full flex items-center justify-center" style="background: var(--md-primary-container);">
+                        <span class="material-icons-round text-xl" style="color: var(--md-on-primary-container);">${item.icon}</span>
+                    </div>
+                    <div class="flex-1">
+                        <p class="text-sm font-medium" style="color: var(--md-on-surface);">${item.text}</p>
+                        <p class="text-xs" style="color: var(--md-on-surface-variant);">${item.trend} pesquisas</p>
+                    </div>
+                    <span class="material-icons-round" style="color: var(--md-outline);">arrow_outward</span>
+                </div>
+            `).join('');
+        }
+
+        // Search function
+        function search() {
+            const q = searchInput.value.trim();
+            if (q) {
+                if (q.includes('.') && !q.includes(' ')) {
+                    window.location.href = q.startsWith('http') ? q : 'https://' + q;
+                } else {
+                    window.location.href = 'https://www.google.com/search?q=' + encodeURIComponent(q);
+                }
+            }
+        }
+
+        function searchFor(query) {
+            searchInput.value = query;
+            search();
+        }
+
+        // Lucky function
+        function feelingLucky() {
+            const q = searchInput.value.trim();
+            if (q) {
+                window.location.href = 'https://www.google.com/search?q=' + encodeURIComponent(q) + '&btnI=1';
+            } else {
+                const sites = [
+                    'https://www.wikipedia.org/wiki/Special:Random',
+                    'https://www.google.com/doodles',
+                    'https://artsandculture.google.com/',
+                    'https://earth.google.com/web/'
+                ];
+                window.location.href = sites[Math.floor(Math.random() * sites.length)];
+            }
+        }
+
+        // AI Mode
+        function aiMode() {
+            const q = searchInput.value.trim();
+            if (q) {
+                window.location.href = 'https://www.google.com/search?q=' + encodeURIComponent(q) + '&udm=50';
+            } else {
+                window.location.href = 'https://gemini.google.com/';
+            }
+        }
+
+        // Event Listeners
+        searchBtn.addEventListener('click', search);
+        luckyBtn.addEventListener('click', feelingLucky);
+        aiModeBtn.addEventListener('click', aiMode);
+        
+        searchInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') search();
+        });
+
+        // Lucky hover effect - simple fade
+        luckyBtn.addEventListener('mouseenter', () => {
+            currentMsgIndex = (currentMsgIndex + 1) % luckyMessages.length;
+            luckyText.style.opacity = '0';
+            luckyText.style.transform = 'translateY(-5px)';
+            
+            setTimeout(() => {
+                luckyText.textContent = luckyMessages[currentMsgIndex];
+                luckyText.style.opacity = '1';
+                luckyText.style.transform = 'translateY(0)';
+            }, 150);
+        });
+        
+        luckyBtn.addEventListener('mouseleave', () => {
+            luckyText.style.opacity = '0';
+            luckyText.style.transform = 'translateY(-5px)';
+            
+            setTimeout(() => {
+                luckyText.textContent = 'Estou com sorte';
+                luckyText.style.opacity = '1';
+                luckyText.style.transform = 'translateY(0)';
+            }, 150);
+        });
+
+        // Upload popup
+        uploadBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            uploadPopup.classList.toggle('active');
+        });
+
+        document.addEventListener('click', (e) => {
+            if (!uploadPopup.contains(e.target) && e.target !== uploadBtn) {
+                uploadPopup.classList.remove('active');
+            }
+        });
+
+        uploadImageBtn.addEventListener('click', () => {
+            imageInput.click();
+            uploadPopup.classList.remove('active');
+        });
+
+        uploadFileBtn.addEventListener('click', () => {
+            fileInput.click();
+            uploadPopup.classList.remove('active');
+        });
+
+        imageInput.addEventListener('change', (e) => {
+            if (e.target.files.length > 0) {
+                window.location.href = 'https://lens.google.com/';
+            }
+        });
+
+        fileInput.addEventListener('change', (e) => {
+            if (e.target.files.length > 0) {
+                alert('Arquivo selecionado: ' + e.target.files[0].name);
+            }
+        });
+
+        // Chip selection
+        document.querySelectorAll('.chip').forEach(chip => {
+            chip.addEventListener('click', function() {
+                document.querySelectorAll('.chip').forEach(c => c.classList.remove('active'));
+                this.classList.add('active');
+            });
+        });
+
+        // Search Suggestions
+        const suggestionsContainer = document.getElementById('suggestionsContainer');
+        let selectedIndex = -1;
+        let suggestions = [];
+
+        searchInput.addEventListener('input', async (e) => {
+            const query = e.target.value.trim();
+            const searchContainer = document.querySelector('.search-container');
+            
+            if (query.length < 2) {
+                suggestionsContainer.classList.remove('active');
+                searchContainer.classList.remove('suggestions-open');
+                return;
+            }
+            
+            try {
+                // Usa JSONP para contornar CORS
+                const callbackName = 'suggestCallback_' + Date.now();
+                const script = document.createElement('script');
+                
+                const promise = new Promise((resolve) => {
+                    window[callbackName] = function(data) {
+                        resolve(data[1] || []);
+                        delete window[callbackName];
+                        script.remove();
+                    };
+                });
+                
+                script.src = `https://suggestqueries.google.com/complete/search?client=chrome&q=${encodeURIComponent(query)}&callback=${callbackName}`;
+                document.body.appendChild(script);
+                
+                suggestions = (await promise).slice(0, 8);
+                
+                if (suggestions.length > 0) {
+                    suggestionsContainer.innerHTML = suggestions.map((s, i) => {
+                        // Tenta extrair domínio para favicon
+                        const searchText = s.toLowerCase().replace(/\s+/g, '');
+                        
+                        // Mapeamento de termos para domínios
+                        const brandDomains = {
+                            'mcdonalds': 'mcdonalds.com',
+                            'mcdonald': 'mcdonalds.com',
+                            'google': 'google.com',
+                            'facebook': 'facebook.com',
+                            'meta': 'meta.com',
+                            'amazon': 'amazon.com',
+                            'apple': 'apple.com',
+                            'iphone': 'apple.com',
+                            'ipad': 'apple.com',
+                            'macbook': 'apple.com',
+                            'microsoft': 'microsoft.com',
+                            'windows': 'microsoft.com',
+                            'xbox': 'xbox.com',
+                            'netflix': 'netflix.com',
+                            'spotify': 'spotify.com',
+                            'twitter': 'twitter.com',
+                            'instagram': 'instagram.com',
+                            'youtube': 'youtube.com',
+                            'whatsapp': 'whatsapp.com',
+                            'uber': 'uber.com',
+                            'airbnb': 'airbnb.com',
+                            'samsung': 'samsung.com',
+                            'galaxy': 'samsung.com',
+                            'nike': 'nike.com',
+                            'adidas': 'adidas.com',
+                            'cocacola': 'coca-cola.com',
+                            'coca-cola': 'coca-cola.com',
+                            'pepsi': 'pepsi.com',
+                            'starbucks': 'starbucks.com',
+                            'walmart': 'walmart.com',
+                            'target': 'target.com',
+                            'ebay': 'ebay.com',
+                            'paypal': 'paypal.com',
+                            'linkedin': 'linkedin.com',
+                            'pinterest': 'pinterest.com',
+                            'reddit': 'reddit.com',
+                            'tiktok': 'tiktok.com',
+                            'snapchat': 'snapchat.com',
+                            'zoom': 'zoom.us',
+                            'slack': 'slack.com',
+                            'discord': 'discord.com',
+                            'telegram': 'telegram.org',
+                            'github': 'github.com',
+                            'stackoverflow': 'stackoverflow.com',
+                            'medium': 'medium.com',
+                            'twitch': 'twitch.tv',
+                            'steam': 'steampowered.com',
+                            'playstation': 'playstation.com',
+                            'nintendo': 'nintendo.com',
+                            'tesla': 'tesla.com',
+                            'spacex': 'spacex.com',
+                            'nasa': 'nasa.gov',
+                            'cnn': 'cnn.com',
+                            'bbc': 'bbc.com',
+                            'nytimes': 'nytimes.com',
+                            'wikipedia': 'wikipedia.org',
+                            'amazon prime': 'primevideo.com',
+                            'prime video': 'primevideo.com',
+                            'hbo': 'hbomax.com',
+                            'disney': 'disney.com',
+                            'pixar': 'pixar.com',
+                            'marvel': 'marvel.com',
+                            'globo': 'globo.com',
+                            'uol': 'uol.com.br',
+                            'mercadolivre': 'mercadolivre.com.br',
+                            'mercado livre': 'mercadolivre.com.br',
+                            'nubank': 'nubank.com.br',
+                            'itau': 'itau.com.br',
+                            'bradesco': 'bradesco.com.br',
+                            'santander': 'santander.com.br',
+                            'ifood': 'ifood.com.br',
+                            'rappi': 'rappi.com.br',
+                            '99': '99app.com',
+                            'magalu': 'magazineluiza.com.br',
+                            'americanas': 'americanas.com.br',
+                            'casasbahia': 'casasbahia.com.br'
+                        };
+                        
+                        // Procura match
+                        let domain = null;
+                        for (const [key, value] of Object.entries(brandDomains)) {
+                            if (searchText.includes(key.replace(/[\s-]/g, ''))) {
+                                domain = value;
+                                break;
+                            }
+                        }
+                        
+                        let iconHtml;
+                        if (domain) {
+                            iconHtml = `<div class="suggestion-icon"><img src="https://www.google.com/s2/favicons?sz=64&domain=${domain}" onerror="this.parentElement.innerHTML='<span class=\\'material-icons-round\\'>search</span>'"></div>`;
+                        } else {
+                            iconHtml = `<span class="material-icons-round">search</span>`;
+                        }
+                        
+                        return `
+                            <div class="suggestion-item" data-index="${i}">
+                                ${iconHtml}
+                                <span><span class="suggestion-match">${query}</span><span class="suggestion-complete">${s.substring(query.length)}</span></span>
+                            </div>
+                        `;
+                    }).join('');
+                    
+                    suggestionsContainer.classList.add('active');
+                    searchContainer.classList.add('suggestions-open');
+                    selectedIndex = -1;
+                    
+                    document.querySelectorAll('.suggestion-item').forEach(item => {
+                        item.addEventListener('click', () => {
+                            searchInput.value = suggestions[item.dataset.index];
+                            suggestionsContainer.classList.remove('active');
+                            searchContainer.classList.remove('suggestions-open');
+                            search();
+                        });
+                    });
+                } else {
+                    suggestionsContainer.classList.remove('active');
+                    searchContainer.classList.remove('suggestions-open');
+                }
+            } catch (e) {
+                suggestionsContainer.classList.remove('active');
+                searchContainer.classList.remove('suggestions-open');
+            }
+        });
+
+        searchInput.addEventListener('keydown', (e) => {
+            const items = document.querySelectorAll('.suggestion-item');
+            const searchContainer = document.querySelector('.search-container');
+            if (e.key === 'ArrowDown') {
+                e.preventDefault();
+                selectedIndex = Math.min(selectedIndex + 1, items.length - 1);
+                items.forEach((item, i) => item.classList.toggle('selected', i === selectedIndex));
+                if (selectedIndex >= 0) searchInput.value = suggestions[selectedIndex];
+            } else if (e.key === 'ArrowUp') {
+                e.preventDefault();
+                selectedIndex = Math.max(selectedIndex - 1, -1);
+                items.forEach((item, i) => item.classList.toggle('selected', i === selectedIndex));
+                if (selectedIndex >= 0) searchInput.value = suggestions[selectedIndex];
+            } else if (e.key === 'Escape') {
+                suggestionsContainer.classList.remove('active');
+                searchContainer.classList.remove('suggestions-open');
+            }
+        });
+
+        document.addEventListener('click', (e) => {
+            if (!suggestionsContainer.contains(e.target) && e.target !== searchInput) {
+                suggestionsContainer.classList.remove('active');
+                document.querySelector('.search-container').classList.remove('suggestions-open');
+            }
+        });
+
+        // Initialize
+        initTrending();
+        searchInput.focus();
+
+        // Menu de Seleção de Texto
+        const selectionMenu = document.getElementById('selectionMenu');
+        const copyBtn = document.getElementById('copyBtn');
+        const searchSelBtn = document.getElementById('searchSelBtn');
+        const aiSelBtn = document.getElementById('aiSelBtn');
+        let selectedText = '';
+
+        document.addEventListener('mouseup', (e) => {
+            setTimeout(() => {
+                const selection = window.getSelection();
+                selectedText = selection.toString().trim();
+                
+                if (selectedText.length > 2 && !selectionMenu.contains(e.target)) {
+                    const range = selection.getRangeAt(0);
+                    const rect = range.getBoundingClientRect();
+                    
+                    let left = rect.left + (rect.width / 2) - 70;
+                    let top = rect.top - 55;
+                    
+                    if (left < 10) left = 10;
+                    if (left + 140 > window.innerWidth) left = window.innerWidth - 150;
+                    if (top < 10) top = rect.bottom + 10;
+                    
+                    selectionMenu.style.left = left + 'px';
+                    selectionMenu.style.top = top + 'px';
+                    selectionMenu.classList.add('active');
+                } else if (!selectionMenu.contains(e.target)) {
+                    selectionMenu.classList.remove('active');
+                }
+            }, 10);
+        });
+
+        document.addEventListener('mousedown', (e) => {
+            if (!selectionMenu.contains(e.target)) {
+                selectionMenu.classList.remove('active');
+            }
+        });
+
+        copyBtn.addEventListener('click', () => {
+            navigator.clipboard.writeText(selectedText);
+            selectionMenu.classList.remove('active');
+        });
+
+        searchSelBtn.addEventListener('click', () => {
+            window.open('https://www.google.com/search?q=' + encodeURIComponent(selectedText), '_blank');
+            selectionMenu.classList.remove('active');
+        });
+
+        aiSelBtn.addEventListener('click', () => {
+            window.open('https://www.google.com/search?q=' + encodeURIComponent(selectedText) + '&udm=50', '_blank');
+            selectionMenu.classList.remove('active');
+        });
+
+        // Seleção customizada com bordas arredondadas
+        function clearCustomSelections() {
+            document.querySelectorAll('.custom-selection').forEach(el => el.remove());
+        }
+
+        function createCustomSelection() {
+            clearCustomSelections();
+            const selection = window.getSelection();
+            if (!selection || selection.rangeCount === 0 || selection.toString().trim().length < 1) return;
+
+            const range = selection.getRangeAt(0);
+            const rects = range.getClientRects();
+
+            for (let i = 0; i < rects.length; i++) {
+                const rect = rects[i];
+                if (rect.width < 1 || rect.height < 1) continue;
+                
+                const div = document.createElement('div');
+                div.className = 'custom-selection';
+                div.style.left = rect.left + 'px';
+                div.style.top = rect.top + 'px';
+                div.style.width = rect.width + 'px';
+                div.style.height = rect.height + 'px';
+                document.body.appendChild(div);
+            }
+        }
+
+        document.addEventListener('selectionchange', () => {
+            const selection = window.getSelection();
+            if (!selection || selection.toString().trim().length < 1) {
+                clearCustomSelections();
+            } else {
+                createCustomSelection();
+            }
+        });
+
+        document.addEventListener('scroll', createCustomSelection);
+        window.addEventListener('resize', createCustomSelection);
+    </script>
+</body>
+</html>
